@@ -38,7 +38,7 @@ public class RemoteMapRegister {
 
     /**
      * 保存到文件，这样才能保证consumer和provider都能获取到注册中心的信息，共享数据，保证数据一致性和高可用性
-     * 数据监听机制：consumer和provider都监听文件，一旦文件发生变化，就重新获取信息
+     * consumer和provider都监听文件，一旦文件发生变化，就重新获取信息 --【数据监听机制】
      * provider挂了，consumer要及时获取信息--【心跳机制】
      * consumer每调一次方法，都存在本地缓存，提高速度 --【本地缓存】
      */

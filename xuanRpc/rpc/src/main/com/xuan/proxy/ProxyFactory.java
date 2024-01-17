@@ -9,6 +9,7 @@ import main.com.xuan.register.RemoteMapRegister;
 import java.lang.reflect.InvocationHandler;
 import java.lang.reflect.Method;
 import java.lang.reflect.Proxy;
+import java.util.ArrayList;
 import java.util.List;
 
 public class ProxyFactory<T> {
@@ -35,8 +36,28 @@ public class ProxyFactory<T> {
                 //【负载均衡 -- 有多个URL该选择哪个】
                 URL randomURL = LoadBalance.random(urls);
 
-                // 【服务调用】
-                String result = httpClient.send(randomURL.getHostname(), randomURL.getPort(), invocation);
+                String result = null;
+
+                //【重试机制 -- 注意要调用不同的URL】
+                int max = 3;
+                while (max > 0) {
+                    // 记录已经调用过的URL，排除掉
+                    List<URL> invokedURLs = new ArrayList<>();
+                    invokedURLs.add(randomURL);
+                    urls.remove(invokedURLs);
+
+                    //【服务调用】
+                    try {
+                        result = httpClient.send(randomURL.getHostname(), randomURL.getPort(), invocation);
+                    } catch (Exception e) {
+                        if (--max != 0)
+                            continue;
+
+                        //【容错机制】不知道为什么前面的异常抛不出去🤔
+                        return "服务调用报错";
+
+                    }
+                }
                 return result;
 
             }
