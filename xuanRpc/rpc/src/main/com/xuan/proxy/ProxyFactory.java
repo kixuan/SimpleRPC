@@ -23,6 +23,14 @@ public class ProxyFactory<T> {
             // 服务端接收到Invocation对象后，再通过反射调用本地的实现类，最后把结果返回给客户端
             // 这里的逻辑和之前写在consumer的逻辑是一样的
             public Object invoke(Object proxy, Method method, Object[] args) throws Throwable {
+
+                //【服务mock】
+                String mock = System.getProperty("mock");
+                if (mock != null && mock.startsWith("return:")) {
+                    String result = mock.replace("return:", "");
+                    return result;
+                }
+
                 // 生成invocation对象
                 Invocation invocation = new Invocation(interfaceClass.getName(), method.getName(),
                         method.getParameterTypes(), args);
@@ -52,10 +60,8 @@ public class ProxyFactory<T> {
                     } catch (Exception e) {
                         if (--max != 0)
                             continue;
-
                         //【容错机制】不知道为什么前面的异常抛不出去🤔
                         return "服务调用报错";
-
                     }
                 }
                 return result;
