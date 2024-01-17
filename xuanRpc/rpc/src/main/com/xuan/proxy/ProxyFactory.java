@@ -1,11 +1,15 @@
 package main.com.xuan.proxy;
 
 import main.com.xuan.common.Invocation;
+import main.com.xuan.common.URL;
+import main.com.xuan.loadbalance.LoadBalance;
 import main.com.xuan.protocol.HttpClient;
+import main.com.xuan.register.RemoteMapRegister;
 
 import java.lang.reflect.InvocationHandler;
 import java.lang.reflect.Method;
 import java.lang.reflect.Proxy;
+import java.util.List;
 
 public class ProxyFactory<T> {
 
@@ -24,7 +28,15 @@ public class ProxyFactory<T> {
 
                 // 利用send方法进行发送对象
                 HttpClient httpClient = new HttpClient();
-                String result = httpClient.send("localhost", 8080, invocation);
+
+                // 从注册中心获取服务提供者的地址列表【服务发现】
+                List<URL> urls = RemoteMapRegister.get(interfaceClass.getName());
+
+                //【负载均衡 -- 有多个URL该选择哪个】
+                URL randomURL = LoadBalance.random(urls);
+
+                // 【服务调用】
+                String result = httpClient.send(randomURL.getHostname(), randomURL.getPort(), invocation);
                 return result;
 
             }
